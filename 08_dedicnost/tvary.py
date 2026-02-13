@@ -1,0 +1,113 @@
+class Tvar2d:
+    def __init__(self, jmeno):
+        self.jmeno = jmeno
+
+
+    def obvod(self):
+        return 0
+
+
+    def obsah(self):
+        return 0
+
+
+    def je_vetsi_nez(self, tvar2):
+        return self.obsah() > tvar2.obsah()
+
+class Ctverec(Tvar2d):
+    def __init__(self, jmeno, a):
+        super().__init__(jmeno)
+        self.a = a
+
+
+    def obvod(self):
+        return self.a * 4
+
+
+    def obsah(self):
+        return self.a ** 2
+
+
+class Obdelnik(Tvar2d):
+    def __init__(self, jmeno, a, b):
+        super().__init__(jmeno)
+        self.a = a
+        self.b = b
+
+
+    def obvod(self):
+        return 2 * self.a + 2 * self.b
+
+
+    def obsah(self):
+        return self.a * self.b
+
+
+class Kruh(Tvar2d):
+    def __init__(self, jmeno, r):
+        super().__init__(jmeno)
+        self.r = r
+
+
+    def obvod(self):
+        return round(2 * 3.14 * self.r, 2)
+
+
+    def obsah(self):
+        return round(3.14 * (self.r ** 2), 2)
+
+
+class Trojuhelnik(Tvar2d):
+    def __init__(self, jmeno, a, b, c):
+        self.kontrola(a, b, c)
+        super().__init__(jmeno)
+        self.a = a
+        self.b = b
+        self.c = c
+
+
+    def kontrola(self, a, b, c):
+        strany = [a, b, c]
+        strany.sort()
+        if strany[0] + strany[1] <= strany[2]:
+            raise ValueError("takový trojúhelník nemůže existovat")
+
+
+    def obvod(self):
+        return self.a + self.b + self.c
+
+
+    def obsah(self):
+        s = (self.a + self.b + self.c) / 2
+        return round(
+            (s * (s - self.a) * (s - self.b) * (s - self.c)) ** 0.5, 2)
+
+
+    def je_pravouhly(self):
+        strany = [self.a, self.b, self.c]
+        strany.sort()
+        return strany[0] ** 2 + strany[1] ** 2 == strany[2] ** 2
+
+
+class RovnostrannyTrojuhelnik(Trojuhelnik):
+    def __init__(self, jmeno, a):
+        super().__init__(jmeno, a, a, a)
+
+
+    def obvod(self):
+        return 3 * self.a
+
+
+    def obsah(self):
+        v = (self.a ** 2 - (self.a / 2) ** 2) ** 0.5
+        return (self.a * v) / 2
+
+
+t1 = Trojuhelnik("trojuhelnicek", 8, 8, 9)
+print(t1.je_pravouhly())
+
+t2 = Trojuhelnik("trojuhelnicek", 5, 4, 3)
+print(t2.je_pravouhly())
+
+t3 = RovnostrannyTrojuhelnik("trojuhelnicek", 1)
+print(t3.obsah())
