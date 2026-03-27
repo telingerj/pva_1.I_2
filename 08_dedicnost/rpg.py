@@ -1,8 +1,8 @@
 #  hra, ve které proti sobě bojují dvě armády
 import random
+import pygame
 
-from unicodedata import ucd_3_2_0
-
+pygame.init()
 
 class Armada:
     def __init__(self, jmeno, barva):
@@ -20,10 +20,14 @@ class Armada:
 
 
 class Postava:
-    def __init__(self, jmeno, zivoty):
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava):
         self.jmeno = jmeno
         self.zivoty = zivoty
         self.armada = None
+        self.pozice = pozice
+        self.textura_leva = textura_leva
+        self.textura_prava = textura_prava
+        self.otoceni = True
 
 
     def pridej_armadu(self, armada):
@@ -42,9 +46,16 @@ class Postava:
         return self.zivoty <= 0
 
 
+    def vykresli(self, screen):
+        if self.otoceni:
+            screen.blit(self.textura_prava, self.pozice)
+        else:
+            screen.blit(self.textura_leva, self.pozice)
+
+
 class Bojovnik(Postava):
-    def __init__(self, jmeno, zivoty, poskozeni):
-        super().__init__(jmeno, zivoty)
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni):
+        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava)
         self.poskozeni = poskozeni
 
 
@@ -54,8 +65,8 @@ class Bojovnik(Postava):
 
 
 class Lucistnik(Bojovnik):
-    def __init__(self, jmeno, zivoty, poskozeni, pocet_sipu):
-        super().__init__(jmeno, zivoty, poskozeni)
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, pocet_sipu):
+        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni)
         self.pocet_sipu = pocet_sipu
 
 
@@ -76,8 +87,8 @@ class Lucistnik(Bojovnik):
 
 
 class Sermir(Bojovnik):
-    def __init__(self, jmeno, zivoty, poskozeni, ucinnost_stitu):
-        super().__init__(jmeno, zivoty, poskozeni)
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, ucinnost_stitu):
+        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni)
         self.ucinnost_stitu = ucinnost_stitu
 
 
@@ -97,8 +108,8 @@ class Sermir(Bojovnik):
 
 
 class Kouzelnik(Postava):
-    def __init__(self, jmeno, zivoty, vyleceni):
-        super().__init__(jmeno, zivoty)
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, vyleceni):
+        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava)
         self.vyleceni = vyleceni
 
 
@@ -110,12 +121,46 @@ class Kouzelnik(Postava):
         postava.pridej_zivoty(self.vyleceni)
 
 
+class Game:
+    def __init__(self):
+        self.screen = pygame.display.set_mode((800, 800))
+        self.clock = pygame.time.Clock()
+        self.running = True
+        self.textury = []
+        self.nacti_textury()
+        self.vytvor_postavy()
 
-armada1 = Armada("hodni", "modra")
-armada2 = Armada("zli", "cervena")
 
-p1 = Postava("Pepa", 100)
-p2 = Postava("Franta", 80)
+    def nacti_textury(self):
+        for postava in ["archer", "magician", "swordsman"]:
+            for otoceni in ["left", "right"]:
+                image = pygame.image.load("images/" + postava + "_" + otoceni + ".png")
+                self.textury.append(image)
 
-armada1.pridej_postavu(p1)
-armada2.pridej_postavu(p2)
+
+    def vytvor_postavy(self):
+        self.armada1 = Armada("hodni", (0, 0, 255))
+        self.armada2 = Armada("zli", (255, 0, 0))
+
+        self.s1 = Sermir("Pepa", 100, (100, 100), self.textury[4], self.textury[5], 10, 5)
+        self.s2 = Sermir("Franta", 100, (600, 100), self.textury[4], self.textury[5], 10, 5)
+
+        self.armada1.pridej_postavu(self.s1)
+        self.armada2.pridej_postavu(self.s2)
+
+
+
+    def loop(self):
+        while self.running:
+            for event in pygame.event.get():
+                if event.type == pygame.QUIT:
+                    self.running = False
+
+            self.screen.fill((255, 255, 255))
+            self.clock.tick(60)
+            self.s1.vykresli(self.screen)
+            self.s2.vykresli(self.screen)
+            pygame.display.flip()
+
+game = Game()
+game.loop()
