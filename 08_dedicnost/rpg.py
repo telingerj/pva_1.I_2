@@ -3,6 +3,7 @@ import random
 import pygame
 
 pygame.init()
+pygame.font.init()
 
 class Armada:
     def __init__(self, jmeno, barva):
@@ -20,14 +21,16 @@ class Armada:
 
 
 class Postava:
-    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava):
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, font):
         self.jmeno = jmeno
         self.zivoty = zivoty
+        self.max_zivoty = zivoty
         self.armada = None
         self.pozice = pozice
         self.textura_leva = textura_leva
         self.textura_prava = textura_prava
         self.otoceni = True
+        self.jmeno_textura = font.render(self.jmeno, True, (0, 150, 0))
 
 
     def pridej_armadu(self, armada):
@@ -52,10 +55,35 @@ class Postava:
         else:
             screen.blit(self.textura_leva, self.pozice)
 
+        pomer_zivotu = self.zivoty / self.max_zivoty
+        pygame.draw.rect(screen, (100, 100, 100),
+                         (self.pozice[0] - 10, self.pozice[1] - 15, 35, 5))
+        pygame.draw.rect(screen, (255, 0, 0),
+                         (self.pozice[0] - 10, self.pozice[1] - 15, 35 * pomer_zivotu, 5))
+
+        screen.blit(self.jmeno_textura, (self.pozice[0] - 10, self.pozice[1] - 30))
+
+
+    def pohyb(self):
+        if self.otoceni:
+            self.pozice = (self.pozice[0] + 1, self.pozice[1])
+        else:
+            self.pozice = (self.pozice[0] - 1, self.pozice[1])
+
+        if self.pozice[0] <= 0 and not self.otoceni:
+            self.otoc()
+        elif self.pozice[0] >= 800 - self.textura_leva.get_size()[0] and self.otoceni:
+            self.otoc()
+
+
+    def otoc(self):
+        self.otoceni = not self.otoceni
+
+
 
 class Bojovnik(Postava):
-    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni):
-        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava)
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, font):
+        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava, font)
         self.poskozeni = poskozeni
 
 
@@ -65,8 +93,8 @@ class Bojovnik(Postava):
 
 
 class Lucistnik(Bojovnik):
-    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, pocet_sipu):
-        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni)
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, pocet_sipu, font):
+        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, font)
         self.pocet_sipu = pocet_sipu
 
 
@@ -87,8 +115,8 @@ class Lucistnik(Bojovnik):
 
 
 class Sermir(Bojovnik):
-    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, ucinnost_stitu):
-        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni)
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, ucinnost_stitu, font):
+        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava, poskozeni, font)
         self.ucinnost_stitu = ucinnost_stitu
 
 
@@ -108,8 +136,8 @@ class Sermir(Bojovnik):
 
 
 class Kouzelnik(Postava):
-    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, vyleceni):
-        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava)
+    def __init__(self, jmeno, zivoty, pozice, textura_leva, textura_prava, vyleceni, font):
+        super().__init__(jmeno, zivoty, pozice, textura_leva, textura_prava, font)
         self.vyleceni = vyleceni
 
 
@@ -127,6 +155,7 @@ class Game:
         self.clock = pygame.time.Clock()
         self.running = True
         self.textury = []
+        self.jmeno_postavy_font = pygame.font.SysFont("Calibri", 15)
         self.nacti_textury()
         self.vytvor_postavy()
 
@@ -142,12 +171,32 @@ class Game:
         self.armada1 = Armada("hodni", (0, 0, 255))
         self.armada2 = Armada("zli", (255, 0, 0))
 
-        self.s1 = Sermir("Pepa", 100, (100, 100), self.textury[4], self.textury[5], 10, 5)
-        self.s2 = Sermir("Franta", 100, (600, 100), self.textury[4], self.textury[5], 10, 5)
+        s1 = Sermir("Pepa", 100, (100, 100), self.textury[4], self.textury[5], 10, 5, self.jmeno_postavy_font)
+        l1 = Lucistnik("Honza", 80, (80, 250), self.textury[0], self.textury[1], 5, 10, self.jmeno_postavy_font)
+        k1 = Kouzelnik("Merlin", 50, (100, 500), self.textury[2], self.textury[3], 10, self.jmeno_postavy_font)
 
-        self.armada1.pridej_postavu(self.s1)
-        self.armada2.pridej_postavu(self.s2)
 
+        s2 = Sermir("Franta", 100, (600, 100), self.textury[4], self.textury[5], 10, 5, self.jmeno_postavy_font)
+        l2 = Lucistnik("Kuba", 80, (580, 250), self.textury[0], self.textury[1], 5, 10, self.jmeno_postavy_font)
+        k2 = Kouzelnik("David", 50, (600, 500), self.textury[2], self.textury[3], 10, self.jmeno_postavy_font)
+
+        self.armada1.pridej_postavu(s1)
+        self.armada1.pridej_postavu(l1)
+        self.armada1.pridej_postavu(k1)
+
+        self.armada2.pridej_postavu(s2)
+        self.armada2.pridej_postavu(l2)
+        self.armada2.pridej_postavu(k2)
+
+        for postava in self.armada2.postavy:
+            postava.otoc()
+
+
+    def vykresli(self):
+        for armada in [self.armada1, self.armada2]:
+            for postava in armada.postavy:
+                postava.vykresli(self.screen)
+                postava.pohyb()
 
 
     def loop(self):
@@ -157,9 +206,8 @@ class Game:
                     self.running = False
 
             self.screen.fill((255, 255, 255))
+            self.vykresli()
             self.clock.tick(60)
-            self.s1.vykresli(self.screen)
-            self.s2.vykresli(self.screen)
             pygame.display.flip()
 
 game = Game()
